@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 const allowedOrigins = [
   "http://localhost:5173", // Локальный фронтенд
-  "https://napkin-mini.vercel.app/", // Пример продакшен-домена (замените на реальный)
+  "https://napkin-mini.vercel.app", // Пример продакшен-домена (замените на реальный)
 ];
 app.use(cors());
 app.use(
