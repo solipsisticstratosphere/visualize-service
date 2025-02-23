@@ -3,12 +3,23 @@ const cors = require("cors");
 const { createCanvas } = require("canvas");
 const app = express();
 app.use(express.json());
+const allowedOrigins = [
+  "http://localhost:5173", // Локальный фронтенд
+  "https://napkin-mini-qnlul0vgr-plastiiiiics-projects.vercel.app/", // Пример продакшен-домена (замените на реальный)
+];
 app.use(cors());
 app.use(
   cors({
-    origin: "http://localhost:5173", // Разрешаем запросы с вашего локального фронтенда
-    methods: ["GET", "POST"], // Разрешенные методы
-    allowedHeaders: ["Content-Type"], // Разрешенные заголовки
+    origin: (origin, callback) => {
+      // Разрешаем запросы без origin (например, от curl) или если origin в списке
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
   })
 );
 const generateNodePositions = (nodes, edges) => {
