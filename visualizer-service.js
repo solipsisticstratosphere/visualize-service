@@ -207,37 +207,26 @@ app.post("/export-graph-image", (req, res) => {
       ...positionedNodes.map((n) => n.position.y + nodeHeight / 2)
     );
 
-    // Вычисляем размеры холста с учетом отступов
+    // Вычисляем размеры холста без масштабирования
     const canvasWidth = maxX - minX + 2 * padding;
     const canvasHeight = maxY - minY + 2 * padding;
 
-    // Ограничиваем максимальный размер
-    const maxSize = 2000;
-    let scale = 1;
-    if (canvasWidth > maxSize || canvasHeight > maxSize) {
-      scale = Math.min(maxSize / canvasWidth, maxSize / canvasHeight);
-    }
-
-    const finalWidth = Math.max(300, canvasWidth * scale);
-    const finalHeight = Math.max(300, canvasHeight * scale);
-
-    // Создаем холст
-    const canvas = createCanvas(finalWidth, finalHeight);
+    // Создаем холст с точными размерами графа
+    const canvas = createCanvas(canvasWidth, canvasHeight);
     const ctx = canvas.getContext("2d");
 
     // Заливаем белый фон
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, finalWidth, finalHeight);
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-    // Применяем масштабирование и смещение
-    ctx.scale(scale, scale);
+    // Смещаем координаты, чтобы граф начинался с отступа
     const offsetX = -minX + padding;
     const offsetY = -minY + padding;
     ctx.translate(offsetX, offsetY);
 
     // Рисуем связи (edges) без стрелок
     ctx.strokeStyle = "#555";
-    ctx.lineWidth = 2 / scale;
+    ctx.lineWidth = 2; // Фиксированная толщина линии без масштаба
     edges.forEach((edge) => {
       const sourceNode = positionedNodes.find((n) => n.label === edge.from);
       const targetNode = positionedNodes.find((n) => n.label === edge.to);
@@ -259,7 +248,7 @@ app.post("/export-graph-image", (req, res) => {
     positionedNodes.forEach((node) => {
       ctx.fillStyle = "#f0f0f0";
       ctx.strokeStyle = "#000";
-      ctx.lineWidth = 1 / scale;
+      ctx.lineWidth = 1; // Фиксированная толщина без масштаба
       const x = node.position.x - nodeWidth / 2;
       const y = node.position.y - nodeHeight / 2;
 
@@ -267,7 +256,7 @@ app.post("/export-graph-image", (req, res) => {
       ctx.strokeRect(x, y, nodeWidth, nodeHeight);
 
       ctx.fillStyle = "#000";
-      ctx.font = `${16 / scale}px Arial`;
+      ctx.font = "16px Arial"; // Фиксированный размер шрифта
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(node.label, node.position.x, node.position.y);
@@ -290,45 +279,36 @@ app.post("/export-graph-image", (req, res) => {
         const dy = endY - startY;
         const angle = Math.atan2(dy, dx);
 
-        // Определяем границы узла
         const targetLeft = targetNode.position.x - nodeWidth / 2;
         const targetRight = targetNode.position.x + nodeWidth / 2;
         const targetTop = targetNode.position.y - nodeHeight / 2;
         const targetBottom = targetNode.position.y + nodeHeight / 2;
 
-        // Находим точку пересечения линии с прямоугольником узла
         const slope = dy / dx;
         let intersectX, intersectY;
 
         if (Math.abs(dx) > Math.abs(dy)) {
-          // Пересечение с левой или правой стороной
           intersectX = dx > 0 ? targetLeft : targetRight;
           intersectY = startY + slope * (intersectX - startX);
           if (intersectY < targetTop || intersectY > targetBottom) {
-            // Если выходит за верхнюю или нижнюю границу, корректируем
             intersectY = dy > 0 ? targetBottom : targetTop;
             intersectX = startX + (intersectY - startY) / slope;
           }
         } else {
-          // Пересечение с верхней или нижней стороной
           intersectY = dy > 0 ? targetTop : targetBottom;
           intersectX = startX + (intersectY - startY) / slope;
           if (intersectX < targetLeft || intersectX > targetRight) {
-            // Если выходит за левую или правую границу, корректируем
             intersectX = dx > 0 ? targetLeft : targetRight;
             intersectY = startY + slope * (intersectX - startX);
           }
         }
 
-        // Корректируем конечную точку
         endX = intersectX;
         endY = intersectY;
 
-        // Параметры стрелки
-        const arrowLength = 20 / scale;
+        const arrowLength = 20; // Фиксированный размер стрелки
         const arrowWidth = Math.PI / 6;
 
-        // Рисуем стрелку
         ctx.beginPath();
         ctx.moveTo(endX, endY);
         ctx.lineTo(
