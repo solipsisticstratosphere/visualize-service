@@ -4,7 +4,13 @@ const { createCanvas } = require("canvas");
 const app = express();
 app.use(express.json());
 app.use(cors());
-
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Разрешаем запросы с вашего локального фронтенда
+    methods: ["GET", "POST"], // Разрешенные методы
+    allowedHeaders: ["Content-Type"], // Разрешенные заголовки
+  })
+);
 const generateNodePositions = (nodes, edges) => {
   const width = 800;
   const height = 600;
