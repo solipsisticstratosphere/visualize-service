@@ -4,14 +4,13 @@ const { createCanvas } = require("canvas");
 const app = express();
 app.use(express.json());
 const allowedOrigins = [
-  "http://localhost:5173", // Локальный фронтенд
-  "https://napkin-mini.vercel.app", // Пример продакшен-домена (замените на реальный)
+  "http://localhost:5173",
+  "https://napkin-mini.vercel.app",
 ];
 app.use(cors());
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Разрешаем запросы без origin (например, от curl) или если origin в списке
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -196,7 +195,6 @@ app.post("/export-graph-image", (req, res) => {
       return res.status(400).json({ error: "Данные не предоставлены" });
     }
 
-    // Используем переданные позиции узлов, если они есть, иначе генерируем
     const positionedNodes =
       nodes.map((node) => ({
         ...node,
@@ -205,12 +203,10 @@ app.post("/export-graph-image", (req, res) => {
         ? nodes
         : generateNodePositions(nodes, edges);
 
-    // Размеры узлов
     const nodeWidth = 100;
     const nodeHeight = 50;
-    const padding = 50; // Отступы от краев
+    const padding = 50;
 
-    // Вычисляем границы графа
     const minX = Math.min(
       ...positionedNodes.map((n) => n.position.x - nodeWidth / 2)
     );
@@ -224,26 +220,21 @@ app.post("/export-graph-image", (req, res) => {
       ...positionedNodes.map((n) => n.position.y + nodeHeight / 2)
     );
 
-    // Вычисляем размеры холста без масштабирования
     const canvasWidth = maxX - minX + 2 * padding;
     const canvasHeight = maxY - minY + 2 * padding;
 
-    // Создаем холст с точными размерами графа
     const canvas = createCanvas(canvasWidth, canvasHeight);
     const ctx = canvas.getContext("2d");
 
-    // Заливаем белый фон
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-    // Смещаем координаты, чтобы граф начинался с отступа
     const offsetX = -minX + padding;
     const offsetY = -minY + padding;
     ctx.translate(offsetX, offsetY);
 
-    // Рисуем связи (edges) без стрелок
     ctx.strokeStyle = "#555";
-    ctx.lineWidth = 2; // Фиксированная толщина линии без масштаба
+    ctx.lineWidth = 2;
     edges.forEach((edge) => {
       const sourceNode = positionedNodes.find((n) => n.label === edge.from);
       const targetNode = positionedNodes.find((n) => n.label === edge.to);
@@ -261,11 +252,10 @@ app.post("/export-graph-image", (req, res) => {
       }
     });
 
-    // Рисуем узлы
     positionedNodes.forEach((node) => {
       ctx.fillStyle = "#f0f0f0";
       ctx.strokeStyle = "#000";
-      ctx.lineWidth = 1; // Фиксированная толщина без масштаба
+      ctx.lineWidth = 1;
       const x = node.position.x - nodeWidth / 2;
       const y = node.position.y - nodeHeight / 2;
 
@@ -273,13 +263,12 @@ app.post("/export-graph-image", (req, res) => {
       ctx.strokeRect(x, y, nodeWidth, nodeHeight);
 
       ctx.fillStyle = "#000";
-      ctx.font = "16px Arial"; // Фиксированный размер шрифта
+      ctx.font = "16px Arial";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(node.label, node.position.x, node.position.y);
     });
 
-    // Рисуем стрелки с учетом границ узлов
     ctx.fillStyle = "#000";
     edges.forEach((edge) => {
       const sourceNode = positionedNodes.find((n) => n.label === edge.from);
@@ -291,7 +280,6 @@ app.post("/export-graph-image", (req, res) => {
         let endX = targetNode.position.x;
         let endY = targetNode.position.y;
 
-        // Вычисляем точку пересечения с границей целевого узла
         const dx = endX - startX;
         const dy = endY - startY;
         const angle = Math.atan2(dy, dx);
@@ -323,7 +311,7 @@ app.post("/export-graph-image", (req, res) => {
         endX = intersectX;
         endY = intersectY;
 
-        const arrowLength = 20; // Фиксированный размер стрелки
+        const arrowLength = 20;
         const arrowWidth = Math.PI / 6;
 
         ctx.beginPath();
